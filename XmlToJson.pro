@@ -10,10 +10,10 @@ SOURCES += \
     TinyXML/tinystr.cpp \
     TinyXML/tinyxml.cpp \
     TinyXML/tinyxmlerror.cpp \
-    TinyXML/tinyxmlparser.cpp
+    TinyXML/tinyxmlparser.cpp \
+    Convertor/convertor.cpp
 
 HEADERS += \
     TinyXML/tinystr.h \
     TinyXML/tinyxml.h \
-    Queue/queue.h \
     Convertor/convertor.h
