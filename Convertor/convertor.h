@@ -8,17 +8,18 @@
 #include <condition_variable>
 #include "TinyXML/tinyxml.h"
 #include <iostream>
+#include <unistd.h>
 
 class Convertor {
 private:
     class XmlParser {
     public:
-        explicit XmlParser(const std::string path){readXml(path);}
+        explicit XmlParser(const std::string &path){readXml(path);}
         TiXmlDocument getDoc(){
             return doc_;
         }
     private:
-        void readXml(const std::string path){
+        void readXml(const std::string &path){
             std::string xml = readXmlFileToString(path);
             doc_.Parse(xml.c_str(), nullptr, TIXML_ENCODING_UTF8);
         }
@@ -39,52 +40,59 @@ private:
 
     class JsonWriter {
     public:
+        JsonWriter(): jsonData_(""){}
+
         void writeJson(std::unique_ptr<TiXmlDocument> doc){
-            std::string jsonData;
-            prepareJsonData(jsonData, "{");
-            prepareJsonData(jsonData, "\"subscribers\": [");
-            extractNodes(doc.get()->FirstChildElement(), jsonData);
-            prepareJsonData(jsonData, "}");
-            prepareJsonData(jsonData, "]");
-            prepareJsonData(jsonData, "}");
-            std::cout << "jsonData" <<std::endl;
+            extractNodes(doc.get()->FirstChildElement());
+            std::cout << jsonData_ <<std::endl;
+            sleep(2);
         }
 
     private:
-        void extractNodes(TiXmlElement * node, std::string & data) {
-            for (TiXmlElement *noteItem = node;
-                 noteItem != nullptr;
-                 noteItem = noteItem->NextSiblingElement())
+        void extractNodes(TiXmlElement * node) {
+            std::string delimetr = "";
+            for (TiXmlElement *nodeItem = node;
+                 nodeItem != nullptr;
+                 nodeItem = nodeItem->NextSiblingElement())
             {
-                if (!noteItem->FirstAttribute())
+                concatinateJsonData(delimetr);
+                concatinateJsonData("{");
+                if (!nodeItem->FirstAttribute())
                 {
-                    extractNodes(noteItem->FirstChildElement(), data);
+                    if (!nodeItem->FirstChildElement()) {
+                        concatinateJsonData(quated(nodeItem->Value()) + ": " + nodeItem->FirstChild()->Value());
+                    } else {
+                        concatinateJsonData(quated(nodeItem->Value()) + ": [");
+                        extractNodes(nodeItem->FirstChildElement());
+                        concatinateJsonData("]");
+                    }
                 } else {
-                    extractAttributes(noteItem->FirstAttribute(), data);
+                    extractAttributes(nodeItem->FirstAttribute());
+                    extractNodes(nodeItem->FirstChildElement());
                 }
-            }
-        }
-
-        void extractAttributes(TiXmlAttribute * attr, std::string & data) {
-            std::string delimetr;
-            for (TiXmlAttribute *attrItem = attr;
-                 attrItem != nullptr;
-                 attrItem = attrItem->Next()){
-                prepareJsonData(data, delimetr);
-                prepareJsonData(data, "{");
-                prepareJsonData(data,  quated(attrItem->Name()) + ": " + quated(attrItem->Value()));
-                prepareJsonData(data, "}");
+                concatinateJsonData("}");
                 delimetr = ",";
             }
         }
 
-        void prepareJsonData(std::string & data, const std::string value){
-            data = data + value + '\n';
+        void extractAttributes(TiXmlAttribute * attr) {
+            std::string delimetr;
+            for (TiXmlAttribute *attrItem = attr;
+                 attrItem != nullptr;
+                 attrItem = attrItem->Next()){
+                concatinateJsonData(quated(attrItem->Name()) + ": " + quated(attrItem->Value()));
+            }
         }
 
-        std::string quated(const std::string value){
+        void concatinateJsonData(const std::string &value){
+            jsonData_ += value + '\n';
+        }
+
+        std::string quated(const std::string &value){
             return "\"" + value + "\"";
         }
+
+        std::string jsonData_;
     };
 
 
