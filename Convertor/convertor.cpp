@@ -24,6 +24,7 @@ void Convertor::consumerProc(Convertor& conv) {
         }
         auto el = std::move(conv.queue_.front());
         conv.queue_.pop();
+        conv.cv_.notify_one();
         lock.unlock();
         JsonWriter jw;
         jw.writeJson(std::move(el));
@@ -39,7 +40,7 @@ void Convertor::producerProc(Convertor& conv, const std::vector<std::string>& fi
         conv.queue_.push(std::make_unique<TiXmlDocument>(parser.getDoc()));
         conv.cv_.notify_one();
     }
-    std::lock_guard<std::mutex> lk(conv.m_);
+    std::lock_guard<std::mutex> lock(conv.m_);
     conv.terminate_ = true;
     conv.cv_.notify_one();
 }

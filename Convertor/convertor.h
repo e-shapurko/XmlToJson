@@ -45,7 +45,7 @@ private:
         void writeJson(std::unique_ptr<TiXmlDocument> doc){
             extractNodes(doc.get()->FirstChildElement());
             std::cout << jsonData_ <<std::endl;
-            sleep(2);
+            sleep(1);
         }
 
     private:
